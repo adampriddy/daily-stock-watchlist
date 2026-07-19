@@ -37,3 +37,4 @@ jobs:
       - name: Notify on failure (ntfy)
         if: failure()
         run: curl -s -H "Title: Stock Watchlist FAILED" -H "Priority: high" -H "Tags: warning" -d "Watchlist run failed - check the Actions log on GitHub." "https://ntfy.sh/${{ secrets.NTFY_TOPIC }}"
+        
