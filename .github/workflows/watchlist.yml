@@ -2,12 +2,8 @@ name: Daily Stock Watchlist
 
 on:
   schedule:
-    # 04:30 UTC = 05:30 BST (summer). GitHub cron can drift 5-15 min,
-    # so this buffer targets inbox delivery by ~6am UK time.
-    # NOTE: after UK clocks change in late Oct, switch to '30 5 * * 1-5'
-    # to keep 5:30am GMT, or leave as-is for a 4:30am GMT run.
     - cron: '30 4 * * 1-5'
-  workflow_dispatch: {}   # manual "Run workflow" button for testing
+  workflow_dispatch: {}
 
 jobs:
   watchlist:
@@ -24,14 +20,20 @@ jobs:
       - name: Generate briefing
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: |
-          mkdir -p output
-          claude -p "Read SKILL.md in the repo root and follow it exactly to produce today's stock watchlist. Today's date: $(date -u '+%A %d %B %Y'). Write the four output files it specifies." \
-            --dangerously-skip-permissions \
-            --max-turns 60
+        run: mkdir -p output && claude -p "Read SKILL.md in the repo root and follow it exactly to produce today's stock watchlist. Today's date: $(date -u '+%A %d %B %Y'). Write the four output files it specifies." --dangerously-skip-permissions --max-turns 60
 
       - name: Verify outputs exist
-        run: |
-          for f in output/subject.txt output/email.txt output/email.html output/teaser.txt; do
-            if [ ! -s "$f" ]; then
-              echo "::error::Missing or empty $f — aborting before delivery"
+        run: test -s output/subject.txt && test -s output/email.txt && test -s output/email.html && test -s output/teaser.txt && echo "all outputs present"
+
+      - name: Build email payload
+        run: jq -n --arg from "Stock Watchlist <${{ secrets.FROM_EMAIL }}>" --arg to "${{ secrets.TO_EMAIL }}" --arg subject "$(head -n1 output/subject.txt)" --rawfile text output/email.txt --rawfile html output/email.html '{from: $from, to: [$to], subject: $subject, text: $text, html: $html}' > payload.json
+
+      - name: Email briefing (Resend)
+        run: curl -sf -X POST "https://api.resend.com/emails" -H "Authorization: Bearer ${{ secrets.RESEND_API_KEY }}" -H "Content-Type: application/json" -d @payload.json
+
+      - name: Push notification teaser (ntfy)
+        run: curl -s -H "Title: Stock Watchlist" -H "Tags: chart_with_upwards_trend" -d "$(cat output/teaser.txt)" "https://ntfy.sh/${{ secrets.NTFY_TOPIC }}"
+
+      - name: Notify on failure (ntfy)
+        if: failure()
+        run: curl -s -H "Title: Stock Watchlist FAILED" -H "Priority: high" -H "Tags: warning" -d "Watchlist run failed - check the Actions log on GitHub." "https://ntfy.sh/${{ secrets.NTFY_TOPIC }}"
