@@ -15,26 +15,32 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Claude Code
-        run: npm install -g @anthropic-ai/claude-code
+        run: |
+          npm install -g @anthropic-ai/claude-code
 
       - name: Generate briefing
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: mkdir -p output && claude -p "Read SKILL.md in the repo root and follow it exactly to produce today's stock watchlist. Today's date: $(date -u '+%A %d %B %Y'). Write the four output files it specifies." --dangerously-skip-permissions --max-turns 60
+        run: |
+          mkdir -p output && claude -p "Read SKILL.md in the repo root and follow it exactly to produce today's stock watchlist. Today's date is $(date -u '+%A %d %B %Y'). Write the four output files it specifies." --dangerously-skip-permissions --max-turns 60
 
       - name: Verify outputs exist
-        run: test -s output/subject.txt && test -s output/email.txt && test -s output/email.html && test -s output/teaser.txt && echo "all outputs present"
+        run: |
+          test -s output/subject.txt && test -s output/email.txt && test -s output/email.html && test -s output/teaser.txt && echo "all outputs present"
 
       - name: Build email payload
-        run: jq -n --arg from "Stock Watchlist <${{ secrets.FROM_EMAIL }}>" --arg to "${{ secrets.TO_EMAIL }}" --arg subject "$(head -n1 output/subject.txt)" --rawfile text output/email.txt --rawfile html output/email.html '{from: $from, to: [$to], subject: $subject, text: $text, html: $html}' > payload.json
+        run: |
+          jq -n --arg from "Stock Watchlist <${{ secrets.FROM_EMAIL }}>" --arg to "${{ secrets.TO_EMAIL }}" --arg subject "$(head -n1 output/subject.txt)" --rawfile text output/email.txt --rawfile html output/email.html '{from: $from, to: [$to], subject: $subject, text: $text, html: $html}' > payload.json
 
-      - name: Email briefing (Resend)
-        run: curl -sf -X POST "https://api.resend.com/emails" -H "Authorization: Bearer ${{ secrets.RESEND_API_KEY }}" -H "Content-Type: application/json" -d @payload.json
+      - name: Email briefing via Resend
+        run: |
+          curl -sf -X POST "https://api.resend.com/emails" -H "Authorization: Bearer ${{ secrets.RESEND_API_KEY }}" -H "Content-Type: application/json" -d @payload.json
 
-      - name: Push notification teaser (ntfy)
-        run: curl -s -H "Title: Stock Watchlist" -H "Tags: chart_with_upwards_trend" -d "$(cat output/teaser.txt)" "https://ntfy.sh/${{ secrets.NTFY_TOPIC }}"
+      - name: Push notification teaser via ntfy
+        run: |
+          curl -s -H "Title: Stock Watchlist" -H "Tags: chart_with_upwards_trend" -d "$(cat output/teaser.txt)" "https://ntfy.sh/${{ secrets.NTFY_TOPIC }}"
 
-      - name: Notify on failure (ntfy)
+      - name: Notify on failure via ntfy
         if: failure()
-        run: curl -s -H "Title: Stock Watchlist FAILED" -H "Priority: high" -H "Tags: warning" -d "Watchlist run failed - check the Actions log on GitHub." "https://ntfy.sh/${{ secrets.NTFY_TOPIC }}"
-        
+        run: |
+          curl -s -H "Title: Stock Watchlist FAILED" -H "Priority: high" -H "Tags: warning" -d "Watchlist run failed - check the Actions log on GitHub." "https://ntfy.sh/${{ secrets.NTFY_TOPIC }}"
