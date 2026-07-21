@@ -14,7 +14,9 @@ Use WebSearch to gather current information across these angles (use today's act
 - Commodities: at minimum crude oil (WTI/Brent) and gold — current price, day/week move, and the driver
 - Currencies: at minimum the US Dollar Index (DXY) — current level, recent trend, and driver; include 1-2 other currency pairs only if there's a genuinely notable move
 
-Run enough searches (typically 6-10) to cover market movers, political/Fed developments, social sentiment, sector-specific news, commodities, and currencies — adjust focus based on what's actually driving the news that day rather than repeating the same list every time.
+For EVERY commodity and currency you feature that day, also search for its current third-party near-term (roughly 3-month) price forecast — the consensus or representative target published by major banks or institutions (e.g. Goldman Sachs, JPMorgan, Morgan Stanley, and for oil the EIA). Capture a single representative 3-month figure (or a tight consensus range) plus, where easy, who is behind it. This is third-party forecast data, NOT your own prediction — label it clearly as such, exactly as you do the stock analyst consensus. If no credible 3-month forecast is available for an item that day, write "n/a" rather than inventing one.
+
+Run enough searches (typically 8-12) to cover market movers, political/Fed developments, social sentiment, sector-specific news, commodities, currencies, and the commodity/currency 3-month forecasts — adjust focus based on what's actually driving the news that day rather than repeating the same list every time.
 
 ## Step 2: Get analyst consensus
 For each candidate stock, search for its current Wall Street analyst consensus rating and note the rating (Strong Buy/Buy/Hold/Sell), buy/hold/sell counts if available, and the average 12-month price target with implied upside/downside. This is third-party consensus data, not your own opinion — label it clearly as such.
@@ -27,7 +29,7 @@ Pick the 5 stocks most worth the user researching further today. Prioritize dive
 - "Cons" — 2-3 sentences, real and specific, not boilerplate
 - "Analyst Consensus" — rating + price target, labeled as third-party consensus, never framed as personal buy/sell advice
 
-Also prepare a "Commodities & Currencies to Watch" list (oil, gold, DXY at minimum) with level/move + driver for each.
+Also prepare a "Commodities & Currencies to Watch" list (oil, gold, DXY at minimum) with, for each item: current level/move, the driver, and the third-party 3-month price forecast (labeled 3rd-party, "n/a" if none found).
 
 ## Step 4: Write the output files
 Write exactly these four files (overwrite if they exist). Do NOT attempt to send anything yourself — the workflow handles delivery.
@@ -36,7 +38,7 @@ Write exactly these four files (overwrite if they exist). Do NOT attempt to send
 A single line: `Stock Watchlist — [today's date]` (e.g. `Stock Watchlist — Monday 20 July 2026`). No trailing newline content beyond the subject.
 
 ### `output/email.txt`
-Plain-text fallback: a simple "AT A GLANCE" ticker/theme/consensus list at the top, then one paragraph block per stock (Why/Pros/Cons/Consensus labeled inline), then the commodities/currencies list, then the closing common-thread line.
+Plain-text fallback: a simple "AT A GLANCE" ticker/theme/consensus list at the top, then one paragraph block per stock (Why/Pros/Cons/Consensus labeled inline), then the commodities/currencies list, then the closing common-thread line. In the commodities/currencies list, include for each item its level/move, driver, and the 3-month forecast inline (e.g. "3-mo forecast (3rd-party): ...").
 
 ### `output/email.html`
 A dark-themed, mobile-friendly HTML email (inline CSS only, max-width 600px, single column). This must be a complete standalone HTML document (include `<html><body>` — the Resend API sends the file as-is). Use this exact color system — a deliberately dark background with light text, so it renders correctly regardless of whether the mail client is in light or dark mode (this avoids the dark-mode auto-inversion bug that made an earlier light-themed version unreadable):
@@ -50,10 +52,10 @@ A dark-themed, mobile-friendly HTML email (inline CSS only, max-width 600px, sin
 
 Structure:
 1. Wrapper `<div style="max-width:600px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#15171c;padding:18px 14px;">`
-2. `<h1 style="color:#ffffff;">Stock Watchlist</h1>` + date subtitle (`color:#9aa0aa`), then a callout box (`background:#232733;border-left:3px solid #6c7789;padding:10px 14px;border-radius:6px;font-size:12.5px;color:#c7cbd4;`) noting this is a research starting point and consensus is third-party.
+2. `<h1 style="color:#ffffff;">Stock Watchlist</h1>` + date subtitle (`color:#9aa0aa`), then a callout box (`background:#232733;border-left:3px solid #6c7789;padding:10px 14px;border-radius:6px;font-size:12.5px;color:#c7cbd4;`) noting this is a research starting point and consensus/forecasts are third-party.
 3. An "AT A GLANCE" summary table (ticker / theme / consensus badge), header row `background:#232733` with `color:#ffffff` header text, ticker cells `color:#ffffff` bold, theme cells `color:#b7bcc6`, consensus as a rounded badge per the palette above. Table background `#1c1f27`, row dividers `#2b3040`.
 4. One card per stock: `<div style="border:1px solid #2b3040;border-left:4px solid [accent];background:#1c1f27;border-radius:0 6px 6px 0;padding:14px 16px;margin-bottom:14px;">` with `<h3 style="color:#ffffff;">N) TICKER — Company</h3>`, a theme subtitle `<p style="color:#8b91a0;">`, then Why it's included / Pros / Cons paragraphs (`color:#e2e4e9` on the paragraph, bold label colored per the palette above), then an Analyst Consensus line (`color:#9aa0aa`, label `color:#c7cbd4`, marked "(3rd-party)").
-5. "Commodities & Currencies to Watch" `<h2 style="color:#ffffff;">` followed by a 3-column table styled like the summary table (asset name `color:#ffffff` bold, level/move `color:#d7dae0`, driver `color:#9aa0aa`).
+5. "Commodities & Currencies to Watch" `<h2 style="color:#ffffff;">` followed by a 4-column table styled like the summary table, with columns: Asset / Level & Move / Driver / 3-Mo Forecast (3rd-party). Asset name `color:#ffffff` bold, level/move `color:#d7dae0`, driver `color:#9aa0aa`, and the 3-month forecast cell `color:#b7bcc6` with the label or a small "(3rd-party)" marker so it reads clearly as an external forecast, not the current price. Show "n/a" in the forecast cell for any item with no credible forecast. On narrow mobile widths keep the table single-column-friendly (small font, tight padding) so 4 columns still render.
 6. Closing common-thread paragraph: `<div style="border-left:3px solid #454c5c;padding:10px 14px;font-size:13px;color:#b7bcc6;font-style:italic;line-height:1.55;">`.
 
 Do NOT include a Sources/links section. Do NOT create a PDF.
@@ -64,7 +66,7 @@ A single-line teaser under 200 characters naming the single most interesting pic
 ## Constraints
 - Delivery model: the workflow emails the briefing to the user via Resend from a dedicated sender address, so it arrives in the INBOX (not Drafts — headless runners can't create Gmail drafts without OAuth). Word the content accordingly: it is a briefing to read, not a draft to review-and-send.
 - Keep the tone factual and balanced; always include real cons, not just boilerplate bull cases.
-- Never issue a personal "buy" or "sell" call — only report third-party analyst consensus ratings, clearly labeled as such.
+- Never issue a personal "buy" or "sell" call — only report third-party analyst consensus ratings and third-party commodity/currency forecasts, clearly labeled as such.
 - No sources/citations/links, no PDF attachment, no Slack.
 - Use the dark color palette specified above for every element — do not revert to a light background with dark text, it was unreadable in this user's mail client.
 - If markets are closed (holiday) and there's genuinely nothing new, note that briefly in the briefing rather than fabricating catalysts — but still write all four output files so delivery doesn't fail.
