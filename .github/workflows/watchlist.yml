@@ -21,8 +21,9 @@ jobs:
       - name: Generate briefing
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_MODEL: claude-sonnet-4-6
         run: |
-          mkdir -p output && claude -p "Read SKILL.md in the repo root and follow it exactly to produce today's stock watchlist. Today's date is $(date -u '+%A %d %B %Y'). Write the four output files it specifies." --dangerously-skip-permissions --max-turns 60
+          mkdir -p output && claude -p "Read SKILL.md in the repo root and follow it exactly to produce today's stock watchlist. Today's date is $(date -u '+%A %d %B %Y'). Write the four output files it specifies." --model claude-sonnet-4-6 --dangerously-skip-permissions --max-turns 25
 
       - name: Verify outputs exist
         run: |
